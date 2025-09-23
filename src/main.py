@@ -30,7 +30,7 @@ def webhook():
     message_text = message.get("text", "")
 
     print(
-        f"{message_from.get("id", "")} {message_from.get("first_name", "")} {message_from.get("last_name", "")} {message_text}"
+        f'{message_from.get("id", "")} {message_from.get("first_name", "")} {message_from.get("last_name", "")} {message_text}'
     )
 
     processing_queue.put(
