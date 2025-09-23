@@ -63,8 +63,6 @@ def worker():
         )
 
         try:
-            if len(message_text.split()) == 1:
-                raise Exception()
             cleaned_text = preprocessing(
                 goose3.Goose().extract(message_text).cleaned_text
                 if nlp_sm(message_text)[0].like_url
