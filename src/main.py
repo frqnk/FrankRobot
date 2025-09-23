@@ -10,7 +10,7 @@ processing_queue = queue.Queue()
 wiki = wikipediaapi.Wikipedia(user_agent="FrankRobot/0.1")
 
 nlp_model_sm = "en_core_web_sm"
-nlp_model_lg = "en_core_web_lg"
+nlp_model_lg = "en_core_web_md"
 
 try:
     nlp_sm = spacy.load(nlp_model_sm)
