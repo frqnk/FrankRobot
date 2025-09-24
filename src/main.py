@@ -27,7 +27,9 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{TOKEN}"
 
 app = flask.Flask(__name__)
 processing_queue = queue.Queue()
-wiki = wikipediaapi.Wikipedia(user_agent="FrankRobot/0.1")
+wiki = wikipediaapi.Wikipedia(
+    user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)"
+)
 
 nlp_model_sm = "en_core_web_sm"
 nlp_model_lg = "en_core_web_md"
@@ -113,25 +115,57 @@ def worker():
         )
 
         try:
+            logging.info(
+                f"[chat_id={message_chat_id}] Iniciando processamento da mensagem: {message_text}"
+            )
             with io.BytesIO() as image_buffer:
                 wordcloud.WordCloud(width=1024, height=1024).generate(
                     preprocessing(get_base_text(message_text))
                 ).to_image().save(image_buffer, format="PNG")
                 image_buffer.seek(0)
                 switch_to_image(message_chat_id, response_id, image_buffer)
+            logging.info(
+                f"[chat_id={message_chat_id}] Nuvem de palavras enviada com sucesso."
+            )
+        except ValueError as ve:
+            logging.warning(f"[chat_id={message_chat_id}] Erro de valor: {ve}")
+            edit_text(message_chat_id, response_id, f"Erro: {ve}")
         except Exception as e:
-            logging.exception("Erro ao gerar nuvem de palavras")
-            edit_text(message_chat_id, response_id, "Erro ao gerar nuvem de palavras")
+            logging.exception(
+                f"[chat_id={message_chat_id}] Erro inesperado ao gerar nuvem de palavras: {e}"
+            )
+            edit_text(
+                message_chat_id,
+                response_id,
+                "Erro inesperado ao gerar nuvem de palavras. Tente novamente mais tarde.",
+            )
         processing_queue.task_done()
 
 
 def get_base_text(message_text):
+    if not message_text or not message_text.strip():
+        raise ValueError("Mensagem vazia. Envie um texto, link ou tópico válido.")
+
+    if len(message_text) > 4096:
+        raise ValueError(
+            "O texto é muito grande. Envie um texto com até 4096 caracteres."
+        )
+
     if nlp_sm(message_text)[0].like_url:
         return goose3.Goose().extract(message_text).cleaned_text
-    elif wiki.page(message_text[:256]).exists():
-        return wiki.page(message_text[:256]).text
-    elif len(message_text.split()) < 7:
-        return "Por favor, forneça um texto mais longo, um URL válido ou um tópico da Wikipedia."
+
+    wiki_page = wiki.page(message_text[:256])
+
+    if wiki_page.exists():
+        if wiki_page.langlinks[pt].exists():
+            return wiki_page.langlinks[pt].text
+        return wiki_page.text
+
+    if len(message_text.split()) < 7:
+        raise ValueError(
+            "Envie um texto mais longo, um link ou um tópico da Wikipedia."
+        )
+
     return message_text
 
 
