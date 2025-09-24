@@ -24,7 +24,7 @@ except:
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Telegram Bot is running."
+    return "https://t.me/FrankRobot is running"
 
 
 @app.route("/webhook", methods=["POST"])
