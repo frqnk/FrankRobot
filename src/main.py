@@ -41,10 +41,12 @@ for lang in nlp_model.keys():
             nlp[lang] = spacy.load(nlp_model[lang])
             break
         except OSError as e:
-            logging.warning(f"Modelo spaCy não encontrado: {e}. Baixando modelo...")
+            logging.warning(
+                f"Modelo spaCy '{nlp_model[lang]}' não encontrado:\n{e}\nBaixando modelo...\n"
+            )
             spacy.cli.download(nlp_model[lang])
         except Exception as e:
-            logging.critical(f"Erro inesperado ao carregar modelo spaCy: {e}")
+            logging.critical(f"Erro inesperado ao carregar modelo spaCy:\n{e}\n")
             sys.exit(1)
 
 
@@ -70,7 +72,7 @@ def webhook():
         or "chat" not in data["message"]
     ):
         logging.warning(
-            f"Dados recebidos no webhook estão incompletos ou malformados: {data}"
+            f"Dados recebidos no webhook estão incompletos ou malformados: {data}\n"
         )
         return "ignored", 400
 
