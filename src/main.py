@@ -55,7 +55,7 @@ def index():
     """
     Endpoint de teste para verificar se o serviço está rodando.
     """
-    return "everything is awesome"
+    return "everything is awesome", 200
 
 
 @app.route("/webhook", methods=["POST"])
@@ -64,20 +64,16 @@ def webhook():
     Endpoint que recebe atualizações do Telegram via webhook.
     Coloca a mensagem recebida na fila de processamento.
     """
-    data = flask.request.get_json(silent=True)
     if (
-        not data
-        or "message" not in data
-        or "from" not in data["message"]
-        or "chat" not in data["message"]
+        (data := flask.request.get_json(silent=True)) is None
+        or (message := data.get("message")) is None
+        or (message_from := message.get("from")) is None
     ):
         logging.warning(
             f"Dados recebidos no webhook estão incompletos ou malformados: {data}\n"
         )
         return "ignored", 400
 
-    message = data["message"]
-    message_from = message["from"]
     message_text = message.get("text", "")
 
     logging.info(
@@ -144,6 +140,10 @@ def worker():
         processing_queue.task_done()
 
 
+def detect_language(text):
+    return (lang := langdetect.detect(text)) if lang in nlp else "en"
+
+
 def get_base_text(message_text):
     if not message_text or not message_text.strip():
         raise ValueError("Mensagem vazia. Envie um texto, link ou tópico válido.")
@@ -156,12 +156,10 @@ def get_base_text(message_text):
     if nlp["en"](message_text.split()[0])[0].like_url:
         return goose3.Goose().extract(message_text).cleaned_text
 
-    wiki_page = wiki.page(message_text[:256])
-
-    if wiki_page.exists():
+    if (wiki_page := wiki.page(message_text[:256])).exists():
         return (
-            wiki_page.langlinks["pt"].text
-            if "pt" in wiki_page.langlinks
+            wiki_page.langlinks[lang := detect_language(message_text)].text
+            if lang in wiki_page.langlinks
             else wiki_page.text
         )
 
@@ -177,26 +175,20 @@ def preprocessing(text):
     """
     Pré-processa o texto, lematizando e filtrando tokens relevantes para a nuvem de palavras.
     """
-    lang = langdetect.detect(text)
-
-    if lang not in nlp:
-        lang = "en"
-
-    doc = nlp[lang](text)
-    tokens = [
-        token.lemma_ if token.pos_ == "PROPN" else token.lemma_.lower()
-        for token in doc
-        if (
-            token.is_alpha
-            and token.pos_ not in {"PRON", "DET", "PART", "AUX"}
-            and not token.is_stop
-            and not token.is_punct
-            and not token.like_url
-            and not token.like_email
-        )
-    ]
-
-    return " ".join(tokens)
+    return " ".join(
+        [
+            token.lemma_ if token.pos_ == "PROPN" else token.lemma_.lower()
+            for token in nlp[detect_language(text)](text)
+            if (
+                token.is_alpha
+                and token.pos_ not in {"PRON", "DET", "PART", "AUX"}
+                and not token.is_stop
+                and not token.is_punct
+                and not token.like_url
+                and not token.like_email
+            )
+        ]
+    )
 
 
 def send_text(chat_id, text):
