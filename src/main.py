@@ -22,6 +22,11 @@ except:
     nlp_lg = spacy.load(nlp_model_lg)
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return "Telegram Bot is running."
+
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = flask.request.get_json(silent=True)
