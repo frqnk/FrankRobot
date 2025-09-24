@@ -5,6 +5,7 @@ import io
 import logging
 import os
 import queue
+import langdetect
 import requests
 import spacy
 import spacy.cli
@@ -31,21 +32,20 @@ wiki = wikipediaapi.Wikipedia(
     user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)"
 )
 
-nlp_model_sm = "en_core_web_sm"
-nlp_model_lg = "en_core_web_md"
+nlp_model = {"en": "en_core_web_md", "pt": "pt_core_news_md"}
+nlp = {}
 
-try:
-    nlp_sm = spacy.load(nlp_model_sm)
-    nlp_lg = spacy.load(nlp_model_lg)
-except OSError as e:
-    logging.warning(f"Modelos spaCy não encontrados: {e}. Baixando modelos...")
-    spacy.cli.download(nlp_model_sm)
-    spacy.cli.download(nlp_model_lg)
-    nlp_sm = spacy.load(nlp_model_sm)
-    nlp_lg = spacy.load(nlp_model_lg)
-except Exception as e:
-    logging.critical(f"Erro inesperado ao carregar modelos spaCy: {e}")
-    sys.exit(1)
+for lang in nlp_model.keys():
+    for _ in range(2):
+        try:
+            nlp[lang] = spacy.load(nlp_model[lang])
+            break
+        except OSError as e:
+            logging.warning(f"Modelo spaCy não encontrado: {e}. Baixando modelo...")
+            spacy.cli.download(nlp_model[lang])
+        except Exception as e:
+            logging.critical(f"Erro inesperado ao carregar modelo spaCy: {e}")
+            sys.exit(1)
 
 
 @app.route("/", methods=["GET"])
@@ -151,7 +151,7 @@ def get_base_text(message_text):
             "O texto é muito grande. Envie um texto com até 4096 caracteres."
         )
 
-    if nlp_sm(message_text)[0].like_url:
+    if nlp["en"](message_text.split()[0])[0].like_url:
         return goose3.Goose().extract(message_text).cleaned_text
 
     wiki_page = wiki.page(message_text[:256])
@@ -175,7 +175,11 @@ def preprocessing(text):
     """
     Pré-processa o texto, lematizando e filtrando tokens relevantes para a nuvem de palavras.
     """
-    doc = nlp_lg(text)
+    lang = langdetect.detect(text)
+    if lang not in nlp:
+        lang = "en"
+
+    doc = nlp[lang](text)
     tokens = [
         token.lemma_ if token.pos_ == "PROPN" else token.lemma_.lower()
         for token in doc
@@ -188,6 +192,7 @@ def preprocessing(text):
             and not token.like_email
         )
     ]
+
     return " ".join(tokens)
 
 
