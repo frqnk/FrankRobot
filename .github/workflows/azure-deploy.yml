@@ -19,4 +19,4 @@ jobs:
           script: |
             cd /home/${{ secrets.USER }}/FrankRobot
             git pull origin main
-            sudo systemctl restart telegram-webhook
+            sudo systemctl restart frankrobot

@@ -178,6 +178,7 @@ def preprocessing(text):
     Pré-processa o texto, lematizando e filtrando tokens relevantes para a nuvem de palavras.
     """
     lang = langdetect.detect(text)
+
     if lang not in nlp:
         lang = "en"
 
