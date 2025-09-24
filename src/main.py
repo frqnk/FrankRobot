@@ -157,9 +157,11 @@ def get_base_text(message_text):
     wiki_page = wiki.page(message_text[:256])
 
     if wiki_page.exists():
-        if wiki_page.langlinks[pt].exists():
-            return wiki_page.langlinks[pt].text
-        return wiki_page.text
+        return (
+            wiki_page.langlinks["pt"].text
+            if "pt" in wiki_page.langlinks
+            else wiki_page.text
+        )
 
     if len(message_text.split()) < 7:
         raise ValueError(
