@@ -32,7 +32,7 @@ wiki = wikipediaapi.Wikipedia(
     user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)"
 )
 
-nlp_model = {"en": "en_core_web_md", "pt": "pt_core_news_md"}
+nlp_model = {"en": "en_core_web_trf", "pt": "pt_core_news_lg"}
 nlp = {}
 
 for lang in nlp_model.keys():
@@ -260,6 +260,6 @@ def delete_message(chat_id, message_id):
 
 
 if __name__ == "__main__":
-    for _ in range(int(os.getenv("WORKERS", "4"))):
+    for _ in range(int(os.getenv("WORKERS", "1"))):
         threading.Thread(target=worker, daemon=True).start()
     app.run(port=int(os.getenv("PORT", "5000")))
