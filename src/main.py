@@ -96,7 +96,7 @@ def webhook():
         or (message_from := message.get("from")) is None
     ):
         logging.warning(f"Webhook data is incomplete or malformed: {data}\n")
-        return "ignored", 400
+        return "ok", 200  # gambiarra
 
     logging.info(
         f"{[message_from.get('timestamp', ''), message_from.get('id', ''), message_from.get('first_name', ''), message_from.get('last_name', ''), message_text := message.get('text', '')]}"
