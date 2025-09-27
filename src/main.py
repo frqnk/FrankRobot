@@ -95,13 +95,13 @@ def webhook():
         return "ignored", 400
 
     logging.info(
-        f'{[            
-            message_from.get("timestamp", ""),
-            message_from.get("id", ""),
-            message_from.get("first_name", ""),
-            message_from.get("last_name", ""),
-            message_text := message.get("text", ""),
-        ]}'
+        f"{[
+            message_from.get('timestamp', ''),
+            message_from.get('id', ''),
+            message_from.get('first_name', ''),
+            message_from.get('last_name', ''),
+            message_text := message.get('text', ''),
+        ]}"
     )
 
     processing_queue.put((message["chat"].get("id"), message_text))
