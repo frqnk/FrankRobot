@@ -27,7 +27,7 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
 app = Flask(__name__)
 processing_queue = Queue()
-nlp = spacy.load("en_core_web_trf")
+nlp = spacy.load("en_core_web_lg")
 wiki = Wikipedia(user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)")
 
 
