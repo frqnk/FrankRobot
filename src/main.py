@@ -185,22 +185,18 @@ def process_wordcloud(message_chat_id, response_id, message_text):
 def get_base_text(message_text):
     if not message_text or not message_text.strip():
         raise ValueError("Text is empty.")
-
-    if len(message_text) > 4096:
+    elif len(message_text) > 4096:
         raise ValueError("Text is too long (max 4096 characters).")
-
-    if nlp(message_text.split()[0])[0].like_url:
+    elif nlp(message_text.split()[0])[0].like_url:
         return Goose().extract(message_text).cleaned_text
-
-    if (wiki_page := wiki.page(message_text[:256])).exists():
+    elif (wiki_page := wiki.page(message_text[:256])).exists():
         return wiki_page.text
-
-    if len(message_text.split()) < 7:
+    elif len(message_text.split()) < 7:
         raise ValueError(
             "Wikipedia title did not match or input text is too short for a wordcloud (min 7 words)."
         )
-
-    return message_text
+    else:
+        return message_text
 
 
 def preprocessing(text):
