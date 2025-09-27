@@ -126,7 +126,10 @@ def worker():
                 "You can make questions about artificial intelligence and correlated topics or use /wordcloud (or /wc) followed by text, URL, or a Wikipedia article title to generate a word cloud.",
             )
         elif message_text.startswith("/wordcloud") or message_text.startswith("/wc"):
-            process_wordcloud(message_chat_id, response_id, message_text)
+            parts = message_text.split(maxsplit=1)
+            process_wordcloud(
+                message_chat_id, response_id, parts[1] if len(parts) > 1 else ""
+            )
         elif welcome := welcome_message(message_text):
             editMessageText(message_chat_id, response_id, f"Chatbot: {welcome}")
         else:
@@ -182,21 +185,25 @@ def process_wordcloud(message_chat_id, response_id, message_text):
         )
 
 
-def get_base_text(message_text):
-    if not message_text or not message_text.strip():
+def get_base_text(text):
+    if not text or not text.strip():
         raise ValueError("Text is empty.")
-    elif len(message_text) > 4096:
+
+    if len(text) > 4096:
         raise ValueError("Text is too long (max 4096 characters).")
-    elif nlp(message_text.split()[0])[0].like_url:
-        return Goose().extract(message_text).cleaned_text
-    elif (wiki_page := wiki.page(message_text[:256])).exists():
+
+    if nlp(text.split()[0])[0].like_url:
+        return Goose().extract(text).cleaned_text
+
+    if (wiki_page := wiki.page(text[:256])).exists():
         return wiki_page.text
-    elif len(message_text.split()) < 7:
+
+    if len(text.split()) < 7:
         raise ValueError(
             "Wikipedia title did not match or input text is too short for a wordcloud (min 7 words)."
         )
-    else:
-        return message_text
+
+    return text
 
 
 def preprocessing(text):
