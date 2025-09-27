@@ -30,10 +30,12 @@ processing_queue = Queue()
 nlp = spacy.load("en_core_web_sm")
 wiki = Wikipedia(user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)")
 
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
+
+for pkg in ["punkt", "punkt_tab"]:
+    try:
+        nltk.data.find(f"tokenizers/{pkg}")
+    except LookupError:
+        nltk.download(pkg, quiet=True)
 
 sentences = []
 wiki_topics = [
