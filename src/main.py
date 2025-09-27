@@ -66,7 +66,7 @@ def worker():
         if message_text.startswith("/start"):
             sendMessage(
                 message_chat_id,
-                "",
+                "Send /wordcloud or /wc followed by text, URL, or a Wikipedia article title to generate a word cloud.",
             )
             processing_queue.task_done()
             continue
