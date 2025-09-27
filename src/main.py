@@ -64,6 +64,8 @@ welcome_words_input = [
     "yo",
     "sup",
     "hola",
+    "oi",
+    "olá",
     "salutations",
 ]
 welcome_words_output = [
@@ -109,21 +111,32 @@ def worker():
     while True:
         message_chat_id, message_text = processing_queue.get()
 
+        logging.info(f"[chat_id={message_chat_id}] Processing message: {message_text}")
+        response_id = (
+            sendMessage(message_chat_id, "Processing...")
+            .json()
+            .get("result")
+            .get("message_id")
+        )
+
         if message_text.startswith("/start"):
-            sendMessage(
+            editMessageText(
                 message_chat_id,
-                "Send /wordcloud or /wc followed by text, URL, or a Wikipedia article title to generate a word cloud.",
+                response_id,
+                "You can make questions about artificial intelligence and correlated topics or use /wordcloud (or /wc) followed by text, URL, or a Wikipedia article title to generate a word cloud.",
             )
         elif message_text.startswith("/wordcloud") or message_text.startswith("/wc"):
-            process_wordcloud(message_chat_id, message_text)
+            process_wordcloud(message_chat_id, response_id, message_text)
         elif welcome := welcome_message(message_text):
-            sendMessage(message_chat_id, f"Chatbot: {welcome}")
+            editMessageText(message_chat_id, response_id, f"Chatbot: {welcome}")
         else:
-            sendMessage(
+            editMessageText(
                 message_chat_id,
+                response_id,
                 f"Chatbot: {answer(message_text, sentences)}",
             )
 
+        logging.info(f"[chat_id={message_chat_id}] Processing completed successfully")
         processing_queue.task_done()
 
 
@@ -147,16 +160,7 @@ def answer(user_text, sentences, threshold=0.05):
         return sentences[sentence_index]
 
 
-def process_wordcloud(message_chat_id, message_text):
-    logging.info(
-        f"[chat_id={message_chat_id}] Processing wordcloud for: {message_text}"
-    )
-    response_id = (
-        sendMessage(message_chat_id, "Processing wordcloud...")
-        .json()
-        .get("result")
-        .get("message_id")
-    )
+def process_wordcloud(message_chat_id, response_id, message_text):
     try:
         with BytesIO() as image_buffer:
             WordCloud(width=1024, height=1024).generate(
@@ -164,7 +168,6 @@ def process_wordcloud(message_chat_id, message_text):
             ).to_image().save(image_buffer, format="PNG")
             image_buffer.seek(0)
             editMessageMedia(message_chat_id, response_id, image_buffer)
-        logging.info(f"[chat_id={message_chat_id}] Processing completed successfully")
     except ValueError as ve:
         logging.warning(f"[chat_id={message_chat_id}] Value error: {ve}")
         editMessageText(message_chat_id, response_id, f"Error: {ve}")
