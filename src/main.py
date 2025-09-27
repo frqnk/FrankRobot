@@ -1,32 +1,82 @@
+import random
 import dotenv
-import flask
-import goose3
-import io
+from flask import Flask, request, json
+from goose3 import Goose
+from io import BytesIO
 import logging
-import os
-import queue
+from os import getenv
+from queue import Queue
 import requests
 import spacy
 import sys
-import threading
-import wikipediaapi
-import wordcloud
+from threading import Thread
+from wikipediaapi import Wikipedia
+from wordcloud import WordCloud
+import nltk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 dotenv.load_dotenv()
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-if not (TELEGRAM_BOT_TOKEN := os.getenv("TELEGRAM_BOT_TOKEN")):
+if not (TELEGRAM_BOT_TOKEN := getenv("TELEGRAM_BOT_TOKEN")):
     logging.critical("TELEGRAM_BOT_TOKEN is not set.")
     sys.exit(1)
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
-app = flask.Flask(__name__)
-processing_queue = queue.Queue()
+app = Flask(__name__)
+processing_queue = Queue()
 nlp = spacy.load("en_core_web_sm")
-wiki = wikipediaapi.Wikipedia(
-    user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)"
-)
+wiki = Wikipedia(user_agent="FrankRobot (frank.schlemmermeyer@fatec.sp.gov.br)")
+
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download("punkt")
+
+sentences = []
+wiki_topics = [
+    "ChatGPT",
+    "Natural language processing",
+    "Machine learning",
+    "Artificial intelligence",
+    "Deep learning",
+    "Transformer (machine learning model)",
+    "Neural network",
+    "Decision tree",
+]
+for topic in wiki_topics:
+    sentences.extend(
+        [sentence for sentence in nltk.sent_tokenize(wiki.page(topic).text)]
+    )
+
+welcome_words_input = [
+    "hey",
+    "hello",
+    "hi",
+    "greetings",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "yo",
+    "sup",
+    "hola",
+    "salutations",
+]
+welcome_words_output = [
+    "hey",
+    "hello",
+    "how you doing?",
+    "welcome",
+    "what's up?",
+    "hi there!",
+    "greetings!",
+    "nice to see you!",
+    "hello friend!",
+    "good to see you!",
+    "how can I help you today?",
+]
 
 
 @app.route("/", methods=["GET"])
@@ -37,7 +87,7 @@ def index():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     if (
-        (data := flask.request.get_json(silent=True)) is None
+        (data := request.get_json(silent=True)) is None
         or (message := data.get("message")) is None
         or (message_from := message.get("from")) is None
     ):
@@ -68,15 +118,37 @@ def worker():
                 message_chat_id,
                 "Send /wordcloud or /wc followed by text, URL, or a Wikipedia article title to generate a word cloud.",
             )
-            processing_queue.task_done()
-            continue
-
-        if message_text.startswith("/wordcloud") or message_text.startswith("/wc"):
+        elif message_text.startswith("/wordcloud") or message_text.startswith("/wc"):
             process_wordcloud(message_chat_id, message_text)
-            processing_queue.task_done()
-            continue
+        elif welcome := welcome_message(message_text):
+            sendMessage(message_chat_id, f"Chatbot: {welcome}")
+        else:
+            sendMessage(
+                message_chat_id,
+                f"Chatbot: {answer(message_text, sentences)}",
+            )
 
         processing_queue.task_done()
+
+
+def welcome_message(text):
+    for word in text.split():
+        if word.lower() in welcome_words_input:
+            return random.choice(welcome_words_output)
+    return None
+
+
+def answer(user_text, sentences, threshold=0.05):
+    cleaned_user_text = preprocessing(user_text)
+    cleaned_sentences = [preprocessing(s) for s in sentences]
+    cleaned_sentences.append(cleaned_user_text)
+    x_sentences = TfidfVectorizer().fit_transform(cleaned_sentences)
+    similarity = cosine_similarity(x_sentences[-1], x_sentences)
+    sentence_index = similarity.argsort()[0][-2]
+    if similarity[0][sentence_index] < threshold:
+        return "Sorry, I have no answer for that."
+    else:
+        return sentences[sentence_index]
 
 
 def process_wordcloud(message_chat_id, message_text):
@@ -90,8 +162,8 @@ def process_wordcloud(message_chat_id, message_text):
         .get("message_id")
     )
     try:
-        with io.BytesIO() as image_buffer:
-            wordcloud.WordCloud(width=1024, height=1024).generate(
+        with BytesIO() as image_buffer:
+            WordCloud(width=1024, height=1024).generate(
                 preprocessing(get_base_text(message_text))
             ).to_image().save(image_buffer, format="PNG")
             image_buffer.seek(0)
@@ -119,7 +191,7 @@ def get_base_text(message_text):
         raise ValueError("Text is too long (max 4096 characters).")
 
     if nlp(message_text.split()[0])[0].like_url:
-        return goose3.Goose().extract(message_text).cleaned_text
+        return Goose().extract(message_text).cleaned_text
 
     if (wiki_page := wiki.page(message_text[:256])).exists():
         return wiki_page.text
@@ -180,7 +252,7 @@ def editMessageMedia(chat_id, message_id, photo):
         data={
             "chat_id": f"{chat_id}",
             "message_id": f"{message_id}",
-            "media": flask.json.dumps({"type": "photo", "media": "attach://photo"}),
+            "media": json.dumps({"type": "photo", "media": "attach://photo"}),
         },
     )
 
@@ -193,6 +265,6 @@ def deleteMessage(chat_id, message_id):
 
 
 if __name__ == "__main__":
-    for _ in range(int(os.getenv("WORKERS", "1"))):
-        threading.Thread(target=worker, daemon=True).start()
-    app.run(port=int(os.getenv("PORT", "5000")))
+    for _ in range(int(getenv("WORKERS", "1"))):
+        Thread(target=worker, daemon=True).start()
+    app.run(port=int(getenv("PORT", "5000")))
