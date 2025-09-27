@@ -196,7 +196,9 @@ def get_base_text(message_text):
         return wiki_page.text
 
     if len(message_text.split()) < 7:
-        raise ValueError("Text is too short (min 7 words).")
+        raise ValueError(
+            "Wikipedia title did not match or input text is too short for a wordcloud (min 7 words)."
+        )
 
     return message_text
 
