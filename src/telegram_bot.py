@@ -41,5 +41,4 @@ def run(token: str):
         listen="localhost",
         port=5000,
         webhook_url="https://server.canadacentral.cloudapp.azure.com/webhook",
-        cert="cert.pem",
     )
