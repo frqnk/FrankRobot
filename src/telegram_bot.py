@@ -31,6 +31,7 @@ def build(token: str):
     for _ in [
         ("start", start),
         ("help", start),
+        ("echo", echo),
     ]:
         app.add_handler(CommandHandler(*_))
     return app
