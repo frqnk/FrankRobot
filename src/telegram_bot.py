@@ -37,4 +37,4 @@ def build(token: str):
 
 
 def run(token: str):
-    build(token).run_polling()
+    build(token).run_webhook()
