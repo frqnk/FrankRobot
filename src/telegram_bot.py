@@ -37,4 +37,9 @@ def build(token: str):
 
 
 def run(token: str):
-    build(token).run_webhook()
+    build(token).run_webhook(
+        listen="localhost",
+        port=5000,
+        webhook_url="https://server.canadacentral.cloudapp.azure.com/webhook",
+        cert="cert.pem",
+    )
