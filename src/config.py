@@ -7,13 +7,13 @@ from dotenv import load_dotenv
 @dataclass
 class Settings:
     telegram_token: str
-    huggingface_token: str | None
 
 
 def get_settings() -> Settings:
     load_dotenv()
 
-    return Settings(
-        os.getenv("TELEGRAM_BOT_TOKEN"),
-        os.getenv("HUGGINGFACE_API_TOKEN"),
-    )
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise RuntimeError("TELEGRAM_BOT_TOKEN environment variable is missing.")
+
+    return Settings(token)

@@ -1,21 +1,16 @@
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
-from .audio import AudioManager
 from .knowledge_base import KnowledgeBase
 from .nlp import NLPEngine
 
 
 class HybridChatbot:
-    def __init__(
-        self, knowledge_base_path: Path, huggingface_token: Optional[str] = None
-    ) -> None:
+    def __init__(self, knowledge_base_path: Path) -> None:
         self._nlp = NLPEngine()
         self._knowledge_base = KnowledgeBase(
             knowledge_base_path, tokenizer=self._nlp.tokenize
         )
-        self._audio = AudioManager(huggingface_token=huggingface_token)
-
         self._empathetic_suffix: Dict[str, str] = {
             "en": "I hear you. Let's work through this together.",
             "pt": "Eu entendo. Vamos resolver isso juntos.",
@@ -32,10 +27,6 @@ class HybridChatbot:
     @property
     def nlp(self) -> NLPEngine:
         return self._nlp
-
-    @property
-    def audio(self) -> AudioManager:
-        return self._audio
 
     def reply(self, user_text: str) -> Tuple[str, Dict[str, float | str]]:
         language = self._nlp.detect_language(user_text)
