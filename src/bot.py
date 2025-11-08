@@ -65,7 +65,7 @@ def main() -> None:
             listen="0.0.0.0",
             port=5000,
             url_path="webhook",
-            webhook_url="https://server.canadacentral.cloudapp.azure.com",
+            webhook_url="https://server.canadacentral.cloudapp.azure.com/webhook",
         )
     except Exception:  # pragma: no cover - crash diagnostics for service start
         logger.exception("FrankRobot service failed to start")
