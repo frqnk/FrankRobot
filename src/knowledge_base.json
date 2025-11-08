@@ -1,0 +1,106 @@
+[
+    {
+        "question": "What is FrankRobot?",
+        "answer": "FrankRobot is a hybrid natural language understanding assistant designed to respond in multiple languages, offering both text and audio replies, and blending NLP with statistical similarity search.",
+        "tags": [
+            "overview",
+            "vision",
+            "robô",
+            "assistente"
+        ]
+    },
+    {
+        "question": "O que é o FrankRobot?",
+        "answer": "FrankRobot é um assistente híbrido de compreensão de linguagem natural que responde em vários idiomas, oferecendo respostas em texto e áudio e combinando NLP com busca estatística.",
+        "tags": [
+            "visão",
+            "introdução",
+            "assistente"
+        ]
+    },
+    {
+        "question": "Which technologies power the FrankRobot assistant?",
+        "answer": "FrankRobot uses python-telegram-bot for messaging, spaCy for linguistic preprocessing, scikit-learn TF-IDF for knowledge search, and Hugging Face transformers for sentiment analysis and generative enhancements.",
+        "tags": [
+            "technology",
+            "stack",
+            "tecnologias",
+            "frameworks"
+        ]
+    },
+    {
+        "question": "Quais tecnologias alimentam o FrankRobot?",
+        "answer": "FrankRobot usa python-telegram-bot para mensagens, spaCy para processamento linguístico, TF-IDF do scikit-learn para busca no conhecimento e transformers da Hugging Face para análise de sentimento e respostas adaptativas.",
+        "tags": [
+            "tecnologia",
+            "stack",
+            "ferramentas"
+        ]
+    },
+    {
+        "question": "Which languages can FrankRobot understand?",
+        "answer": "FrankRobot automatically detects the user language with langdetect and supports at least English and Portuguese responses, adapting tone and sentiment-aware phrasing accordingly.",
+        "tags": [
+            "languages",
+            "international",
+            "idiomas",
+            "l10n"
+        ]
+    },
+    {
+        "question": "Quais idiomas o FrankRobot entende?",
+        "answer": "FrankRobot detecta automaticamente o idioma com langdetect e oferece respostas em inglês e português, ajustando o tom de acordo com a emoção do usuário.",
+        "tags": [
+            "idiomas",
+            "internacional",
+            "multilíngue"
+        ]
+    },
+    {
+        "question": "Can FrankRobot handle audio conversations?",
+        "answer": "Yes, FrankRobot transcribes incoming voice notes with SpeechRecognition and can synthesize spoken replies so conversations remain hands-free.",
+        "tags": [
+            "audio",
+            "voice",
+            "accessibility",
+            "voz"
+        ]
+    },
+    {
+        "question": "O FrankRobot consegue lidar com conversas em áudio?",
+        "answer": "Sim, FrankRobot transcreve mensagens de voz com SpeechRecognition e sintetiza respostas faladas para manter a conversa em modo mãos-livres.",
+        "tags": [
+            "áudio",
+            "voz",
+            "acessibilidade"
+        ]
+    },
+    {
+        "question": "How does FrankRobot adapt its responses?",
+        "answer": "FrankRobot analyses sentiment using a multilingual Hugging Face model and adjusts responses with empathetic or enthusiastic tones based on user mood.",
+        "tags": [
+            "sentiment",
+            "context",
+            "emoção",
+            "adaptação"
+        ]
+    },
+    {
+        "question": "Como o FrankRobot adapta as respostas?",
+        "answer": "FrankRobot analisa o sentimento com um modelo multilíngue da Hugging Face e ajusta as mensagens com um tom empático ou entusiasmado conforme o humor do usuário.",
+        "tags": [
+            "sentimento",
+            "contexto",
+            "emoção"
+        ]
+    },
+    {
+        "question": "What makes FrankRobot a hybrid chatbot?",
+        "answer": "FrankRobot combines curated knowledge base answers ranked by cosine similarity with dynamic sentiment-aware messaging, bridging rule-based precision and adaptive dialogue.",
+        "tags": [
+            "hybrid",
+            "strategy",
+            "híbrido"
+        ]
+    }
+]
