@@ -1,4 +1,5 @@
 import json
+import logging
 import numpy
 
 from dataclasses import dataclass
@@ -17,6 +18,7 @@ class KnowledgeEntry:
 
 class KnowledgeBase:
     def __init__(self, data_path: Path, tokenizer: Callable[[str], List[str]]) -> None:
+        self._logger = logging.getLogger(self.__class__.__name__)
         self._entries: List[KnowledgeEntry] = self._load_entries(data_path)
         self._tokenizer = tokenizer
         self._vectorizer = TfidfVectorizer(
@@ -29,10 +31,12 @@ class KnowledgeBase:
 
     def _load_entries(self, path: Path) -> List[KnowledgeEntry]:
         if not path.exists():
+            self._logger.error("Knowledge base file not found at %s", path)
             raise FileNotFoundError(f"Knowledge base file not found at {path}.")
+        self._logger.info("Loading knowledge base from %s", path)
         with path.open("r", encoding="utf-8") as file:
             payload = json.load(file)
-        return [
+        entries = [
             KnowledgeEntry(
                 question=item["question"],
                 answer=item["answer"],
@@ -40,6 +44,8 @@ class KnowledgeBase:
             )
             for item in payload
         ]
+        self._logger.info("Loaded %s knowledge entries", len(entries))
+        return entries
 
     def _corpus(self) -> List[str]:
         return [
@@ -49,8 +55,10 @@ class KnowledgeBase:
 
     def search(self, text: str, top_k: int = 3) -> List[Tuple[KnowledgeEntry, float]]:
         if not text.strip():
+            self._logger.warning("Empty search query received; returning no results.")
             return []
 
+        self._logger.debug("Searching knowledge base with query='%s'", text)
         query_vec = self._vectorizer.transform([text])
         similarities = cosine_similarity(query_vec, self._matrix)[0]
         ranked_indices = numpy.argsort(similarities)[::-1][:top_k]
@@ -61,4 +69,5 @@ class KnowledgeBase:
             if score <= 0:
                 continue
             results.append((self._entries[idx], score))
+        self._logger.debug("Found %s results", len(results))
         return results

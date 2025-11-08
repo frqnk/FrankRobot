@@ -1,11 +1,12 @@
 import functools
-import spacy
-
+import logging
 from typing import Dict, Iterable, List, Optional
+
+import spacy
 from langdetect import DetectorFactory, LangDetectException, detect
 from spacy.language import Language
-from transformers import pipeline
 from spacy.cli import download
+from transformers import pipeline
 
 
 DetectorFactory.seed = 42
@@ -15,7 +16,8 @@ class NLPEngine:
     _MULTILINGUAL_MODEL = "xx_sent_ud_sm"
     _PIPELINE_MODEL = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 
-    def __init__(self, supported_languages: Dict[str, str] | None) -> None:
+    def __init__(self, supported_languages: Dict[str, str] | None = None) -> None:
+        self._logger = logging.getLogger(self.__class__.__name__)
         self.supported_languages = supported_languages or {
             "en": "en_core_web_sm",
             "pt": "pt_core_news_sm",
@@ -24,11 +26,19 @@ class NLPEngine:
         self._sentiment_pipeline = pipeline(
             "text-classification", model=self._PIPELINE_MODEL
         )
+        self._logger.info(
+            "NLPEngine initialized with languages: %s", list(self.supported_languages)
+        )
 
     def detect_language(self, text: str) -> str:
         try:
-            return detect(text)
+            language = detect(text)
+            self._logger.debug(
+                "Detected language '%s' for text of length %s", language, len(text)
+            )
+            return language
         except LangDetectException:
+            self._logger.warning("Language detection failed. Falling back to English.")
             return "en"
 
     def _resolve_model_name(self, lang_code: str) -> str:
@@ -38,8 +48,12 @@ class NLPEngine:
     @functools.lru_cache(maxsize=3)
     def _load_model(self, model_name: str) -> Language:
         try:
+            self._logger.info("Loading spaCy model '%s'", model_name)
             return spacy.load(model_name)
         except OSError:
+            self._logger.warning(
+                "Model '%s' not found locally. Attempting download.", model_name
+            )
             download(model_name)
             return spacy.load(model_name)
 
@@ -70,6 +84,7 @@ class NLPEngine:
         result = self._sentiment_pipeline(text, truncation=True)[0]
         score = float(result.get("score", 0.0))
         label = str(result.get("label", "neutral"))
+        self._logger.debug("Sentiment model returned label=%s score=%.3f", label, score)
 
         if label.lower().startswith("positive"):
             return {"label": "positive", "score": score, "language": lang}

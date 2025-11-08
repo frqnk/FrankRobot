@@ -1,6 +1,7 @@
+import logging
 import os
-
 from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 
@@ -14,6 +15,9 @@ def get_settings() -> Settings:
 
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
+        logging.getLogger(__name__).error(
+            "TELEGRAM_BOT_TOKEN environment variable is missing."
+        )
         raise RuntimeError("TELEGRAM_BOT_TOKEN environment variable is missing.")
-
+    logging.getLogger(__name__).info("Telegram token detected (length=%s)", len(token))
     return Settings(token)
